@@ -19,6 +19,8 @@ jobs:
       R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
       BUCKET: ${{ secrets.R2_BUCKET }}
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Installer FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
