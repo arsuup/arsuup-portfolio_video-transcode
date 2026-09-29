@@ -37,14 +37,15 @@ jobs:
       - name: Prévenir le Worker
         if: always()
         env:
-          CALLBACK_URL: ${{ secrets.CALLBACK_URL }}
+          CALLBACK_URL: https://worker-transcode.arsuup.fr/callback
           CALLBACK_SECRET: ${{ secrets.CALLBACK_SECRET }}
           STATUS: ${{ job.status }}
         run: |
-          jq -n --arg job_id "$JOB_ID" --arg input_key "$INPUT_KEY" --arg status "$STATUS" \
+          jq -n \
+            --arg job_id "$JOB_ID" \ --arg input_key "$INPUT_KEY" \ --arg status "$STATUS" \
             '{job_id: $job_id, input_key: $input_key, status: $status}' \
           | curl -sS -X POST "$CALLBACK_URL" \
-              -H "Authorization: ${{ secrets.CALLBACK_SECRET }}" \
+              -H "Authorization: Bearer $CALLBACK_SECRET" \
               -H "Content-Type: application/json" \
-              -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+              -H "User-Agent: GitHubActions-Transcoder/1.0" \
               --data-binary @-
