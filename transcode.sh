@@ -13,7 +13,7 @@ SHORT=$(( SRC_W < SRC_H ? SRC_W : SRC_H ))
 # bordel
 LADDER="2160:16000k:192k 1440:8000k:192k 1080:6000k:192k 720:2800k:128k 480:1400k:96k 144:200k:48k"
 
-printf '#EXTM3U\n#EXT-X-VERSION:3\n' > "$OUT/master.m3u8"
+printf '#EXTM3U\n#EXT-X-VERSION:3\n' > "$OUT/index.m3u8"
 
 for r in $LADDER; do
   IFS=: read -r H VB AB <<< "$r"
