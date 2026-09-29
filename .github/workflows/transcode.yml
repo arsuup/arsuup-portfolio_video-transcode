@@ -44,6 +44,7 @@ jobs:
           jq -n --arg job_id "$JOB_ID" --arg input_key "$INPUT_KEY" --arg status "$STATUS" \
             '{job_id: $job_id, input_key: $input_key, status: $status}' \
           | curl -sS -X POST "$CALLBACK_URL" \
-              -H "Authorization: Bearer $CALLBACK_SECRET" \
+              -H "Authorization: ***" \
               -H "Content-Type: application/json" \
-              --data-binary @- || true
+              -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+              --data-binary @-
