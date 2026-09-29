@@ -31,11 +31,11 @@ for r in $LADDER; do
     -c:a aac -b:a "$AB" -ac 2 \
     -f hls -hls_time 6 -hls_playlist_type vod \
     -hls_segment_filename "$OUT/${H}_%03d.ts" \
-    "$OUT/${H}.m3u8"
+    "$OUT/${H}p.m3u8"
 
   RES=$(ffprobe -v error -select_streams v:0 \
-        -show_entries stream=width,height -of csv=s=x:p=0 "$OUT/${H}_000.ts")
+    -show_entries stream=width,height -of csv=s=x:p=0 "$OUT/${H}_000.ts" | sed -n '1p')
 
   printf '#EXT-X-STREAM-INF:BANDWIDTH=%s,RESOLUTION=%s\n%sp.m3u8\n' \
-    "$BW" "$RES" "$H" >> "$OUT/master.m3u8"
+    "$BW" "$RES" "$H" >> "$OUT/index.m3u8"
 done
