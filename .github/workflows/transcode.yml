@@ -37,7 +37,7 @@ jobs:
       - name: Prévenir le Worker
         if: always()
         env:
-          CALLBACK_URL: https://worker-transcode.arsuup.fr/callback
+          CALLBACK_URL: ${{ secrets.CALLBACK_URL }}
           CALLBACK_SECRET: ${{ secrets.CALLBACK_SECRET }}
           STATUS: ${{ job.status }}
         run: |
