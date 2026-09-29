@@ -17,6 +17,8 @@ jobs:
       AWS_DEFAULT_REGION: auto
       R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
       BUCKET: ${{ secrets.R2_BUCKET }}
+      INPUT_KEY: ${{ inputs.input_key }}
+      JOB_ID: ${{ inputs.job_id }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,20 +26,24 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Télécharger depuis R2
-        run: aws s3 cp "s3://$BUCKET/${{ inputs.input_key }}" in.mp4 --endpoint-url "$R2_ENDPOINT"
+        run: aws s3 cp "s3://$BUCKET/$INPUT_KEY" in.mp4 --endpoint-url "$R2_ENDPOINT"
 
       - name: Transcoder
         run: bash transcode.sh
 
       - name: Envoyer vers R2
-        run: |
-          aws s3 sync out "s3://$BUCKET/out/${{ inputs.job_id }}/" \
-            --endpoint-url "$R2_ENDPOINT"
+        run: aws s3 sync out "s3://$BUCKET/chunk_001/$JOB_ID/" --endpoint-url "$R2_ENDPOINT"
 
       - name: Prévenir le Worker
         if: always()
+        env:
+          CALLBACK_URL: ${{ secrets.CALLBACK_URL }}
+          CALLBACK_SECRET: ${{ secrets.CALLBACK_SECRET }}
+          STATUS: ${{ job.status }}
         run: |
-          curl -X POST "${{ secrets.CALLBACK_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.CALLBACK_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d '{"job_id":"${{ inputs.job_id }}","status":"${{ job.status }}"}' || true
+          jq -n --arg job_id "$JOB_ID" --arg input_key "$INPUT_KEY" --arg status "$STATUS" \
+            '{job_id: $job_id, input_key: $input_key, status: $status}' \
+          | curl -sS -X POST "$CALLBACK_URL" \
+              -H "Authorization: Bearer $CALLBACK_SECRET" \
+              -H "Content-Type: application/json" \
+              --data-binary @- || true
