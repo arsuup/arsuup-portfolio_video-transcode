@@ -4,14 +4,13 @@ on:
     inputs:
       input_key:
         required: true
-      output_key:
-        required: true
       job_id:
         required: true
 
 jobs:
   transcode:
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -20,12 +19,12 @@ jobs:
       BUCKET: ${{ secrets.R2_BUCKET }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Installer FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Télécharger depuis R2
-        run: aws s3 cp "s3://$BUCKET/${{ inputs.input_key }}" video.mp4 --endpoint-url "$R2_ENDPOINT"
+        run: aws s3 cp "s3://$BUCKET/${{ inputs.input_key }}" in.mp4 --endpoint-url "$R2_ENDPOINT"
 
       - name: Transcoder
         run: bash transcode.sh
@@ -41,4 +40,4 @@ jobs:
           curl -X POST "${{ secrets.CALLBACK_URL }}" \
             -H "Authorization: Bearer ${{ secrets.CALLBACK_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d '{"job_id":"${{ inputs.job_id }}","status":"${{ job.status }}"}'
+            -d '{"job_id":"${{ inputs.job_id }}","status":"${{ job.status }}"}' || true
