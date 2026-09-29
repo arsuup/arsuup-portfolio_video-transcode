@@ -1,0 +1,43 @@
+name: transcode
+on:
+  workflow_dispatch:
+    inputs:
+      input_key:
+        required: true
+      output_key:
+        required: true
+      job_id:
+        required: true
+
+jobs:
+  transcode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - name: Installer FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Télécharger depuis R2
+        run: aws s3 cp "s3://$BUCKET/${{ inputs.input_key }}" video.mp4 --endpoint-url "$R2_ENDPOINT"
+
+      - name: Transcoder
+        run: bash transcode.sh
+
+      - name: Envoyer vers R2
+        run: |
+          aws s3 sync out "s3://$BUCKET/out/${{ inputs.job_id }}/" \
+            --endpoint-url "$R2_ENDPOINT"
+
+      - name: Prévenir le Worker
+        if: always()
+        run: |
+          curl -X POST "${{ secrets.CALLBACK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CALLBACK_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"job_id":"${{ inputs.job_id }}","status":"${{ job.status }}"}'
